@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flexLibProperties version="1">
+<includeClasses>
+<classEntry path="yuku.konsol.Konsol"/>
+<classEntry path="yuku.konsol.Font"/>
+<classEntry path="yuku.konsol.Cell"/>
+</includeClasses>
+<includeResources/>
+<namespaceManifests/>
+</flexLibProperties>

@@ -3,6 +3,7 @@ package yuku.konsol
 	import flash.display.BitmapData;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.utils.Dictionary;
 	
 	import mx.core.BitmapAsset;
 	
@@ -12,12 +13,8 @@ package yuku.konsol
 		internal var height: int;
 		
 		private var bitmap: BitmapData;
-		private var palette: Array = [
-			0x000000, 0x0000aa, 0x00aa00, 0x00aaaa, 0xaa0000, 0xaa00aa, 0xaa5500, 0xaaaaaa,
-			0x555555, 0x5555ff, 0x55ff55, 0x55ffff, 0xff5555, 0xff55ff, 0xffff55, 0xffffff,
-		];
 		
-		private var coloredBitmaps: Array = new Array(palette.length);
+		private var coloredBitmapCache: Dictionary = new Dictionary(); // Dictionary<color: uint, BitmapData>
 		
 		[Embed(source='defaultFont.png')]
 		private static var defaultBitmapClass: Class;
@@ -35,13 +32,13 @@ package yuku.konsol
 			return new Font(defaultBitmap.bitmapData, 8, 12);
 		}
 		
-		internal function getColoredBitmap(fgColor: int): BitmapData {
-			if (!coloredBitmaps[fgColor]) {
+		internal function getColoredBitmap(color: uint): BitmapData {
+			if (!coloredBitmapCache[color]) {
 				var bitmap: BitmapData = this.bitmap.clone();
-				bitmap.threshold(bitmap, bitmap.rect, new Point(), ">", 0x0, 0xff000000 | palette[fgColor], 0xff000000, false);
-				coloredBitmaps[fgColor] = bitmap;
+				bitmap.threshold(bitmap, bitmap.rect, new Point(), ">", 0x0, color, 0xff000000, false);
+				coloredBitmapCache[color] = bitmap;
 			}
-			return coloredBitmaps[fgColor]; 
+			return coloredBitmapCache[color]; 
 		}
 
 		internal function isPrintable(char: int): Boolean {
@@ -58,10 +55,6 @@ package yuku.konsol
 			res.height = this.height;
 			
 			return res;
-		}
-		
-		internal function getPaletteValue(index: int): uint {
-			return palette[index];
 		}
 	}
 }

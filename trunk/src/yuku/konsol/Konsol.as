@@ -249,12 +249,12 @@ package yuku.konsol
 				dispatchEvent(konsolEvent);
 			} else if (event.keyCode == Keyboard.BACKSPACE) {
 				if (ccol_ > readInitCol_) {
+					// put back cursor
+					ccol_--;
+					
 					//# clear cur char
 					data_[crow_][ccol_].char = 0x0;
 					updateScreen(crow_, ccol_);
-					
-					// put back cursor
-					ccol_--;
 					
 					// remove one char from buffer
 					readBuffer_ = readBuffer_.substr(0, readBuffer_.length - 1);

@@ -3,6 +3,7 @@ package yuku.konsol
 	import flash.display.BitmapData;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	
 	import mx.core.BitmapAsset;
@@ -13,23 +14,31 @@ package yuku.konsol
 		internal var height: int;
 		
 		private var bitmap: BitmapData;
+		private var map: Object;
 		
 		private var coloredBitmapCache: Dictionary = new Dictionary(); // Dictionary<color: uint, BitmapData>
 		
 		[Embed(source='defaultFont.png')]
 		private static var defaultBitmapClass: Class;
 		
-		public function Font(bitmap: BitmapData, width: int, height: int) 
+		[Embed(source='defaultFont.map', mimeType='application/octet-stream')] // codepage 437
+		private static var defaultMapClass: Class;
+		
+		public function Font(bitmap: BitmapData, width: int, height: int, map: Object = null) 
 		{
 			this.width = width;
 			this.height = height;
 			this.bitmap = bitmap;
+			this.map = map;
 		}
 
 		public static function getDefaultFont(): Font {
 			var defaultBitmap: BitmapAsset = new defaultBitmapClass() as BitmapAsset;
+			var defaultMapBytes: ByteArray = new defaultMapClass() as ByteArray;
 			
-			return new Font(defaultBitmap.bitmapData, 8, 12);
+			var defaultMap: Object = defaultMapBytes.readObject();
+			
+			return new Font(defaultBitmap.bitmapData, 8, 12, defaultMap);
 		}
 		
 		internal function getColoredBitmap(color: uint): BitmapData {
@@ -42,12 +51,22 @@ package yuku.konsol
 		}
 
 		internal function isPrintable(char: int): Boolean {
+			if (map) {
+				if (char in map) {
+					return true;
+				}
+			}
+			
 			if (char < 32) return false;
 			if (char > 255) return false;
 			return true;
 		}
 		
 		internal function getRectForChar(char: int): Rectangle {
+			if (map && (char in map)) {
+				char = map[char];
+			}
+			
 			var res: Rectangle = new Rectangle();
 			res.x = (char % 32) * width;
 			res.y = (int(char / 32) - 1) * height;

@@ -4,6 +4,7 @@
 <classEntry path="yuku.konsol.Konsol"/>
 <classEntry path="yuku.konsol.Font"/>
 <classEntry path="yuku.konsol.Cell"/>
+<classEntry path="yuku.konsol.KonsolEvent"/>
 </includeClasses>
 <includeResources/>
 <namespaceManifests/>

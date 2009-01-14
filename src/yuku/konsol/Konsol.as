@@ -3,8 +3,11 @@ package yuku.konsol
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
+	import flash.events.FocusEvent;
+	import flash.events.KeyboardEvent;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.ui.Keyboard;
 
 	public class Konsol extends Sprite
 	{
@@ -40,6 +43,10 @@ package yuku.konsol
 			0xff555555, 0xff5555ff, 0xff55ff55, 0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff,
 		];
 		
+		//# for read* methods
+		private var readInitCol_: int = 0;
+		private var readBuffer_: String = '';
+		
 		public function Konsol(nrow: int = 25, ncol: int = 80, font: Font = null) {
 			this.nrow_ = nrow;
 			this.ncol_ = ncol;
@@ -59,6 +66,8 @@ package yuku.konsol
 			
 			crow_ = 0;
 			ccol_ = 0;
+			
+			this.buttonMode = true;
 		}
 		
 		private function newRow(): Array {
@@ -97,6 +106,8 @@ package yuku.konsol
 			data_ = newData();
 			
 			screen_.fillRect(screen_.rect, palette_[bgColor_]);
+			crow_ = 0;
+			ccol_ = 0;
 		}
 		
 		public function position(row: int = -1, col: int = -1): void {
@@ -112,6 +123,14 @@ package yuku.konsol
 			if (crow_ >= nrow_) crow_ = nrow_ - 1;
 			if (ccol_ < 0) ccol_ = 0;
 			if (ccol_ >= ncol_) ccol_ = ncol_ - 1;
+		}
+		
+		public function get crow(): int {
+			return crow_;
+		}
+		
+		public function get ccol(): int {
+			return ccol_;
 		}
 		
 		private function updateScreen(row: int, col: int): void {
@@ -199,6 +218,56 @@ package yuku.konsol
 		
 		public function get fgColor(): int {
 			return fgColor_;
+		}
+		
+		public function read(): void {
+			readBuffer_ = '';
+			readInitCol_ = ccol_;
+			
+			// add stage focuser
+			if (stage) {
+				stage.focus = this;
+				stage.addEventListener(FocusEvent.FOCUS_OUT, read_focusRestorer);
+			}
+			addEventListener(KeyboardEvent.KEY_DOWN, read_keyDown);
+		}
+		
+		private function read_keyDown(event: KeyboardEvent): void {
+			if (event.keyCode == Keyboard.ENTER) {
+				//# finish
+				printNewLine();
+				var konsolEvent: KonsolEvent = new KonsolEvent(KonsolEvent.READ_COMPLETE);
+				konsolEvent.line = readBuffer_;
+				
+				//# clean up
+				removeEventListener(KeyboardEvent.KEY_DOWN, read_keyDown);
+				stage.removeEventListener(FocusEvent.FOCUS_OUT, read_focusRestorer);
+				
+				// dispatch (must be last)
+				dispatchEvent(konsolEvent);
+			} else if (event.keyCode == Keyboard.BACKSPACE) {
+				if (ccol_ > readInitCol_) {
+					//# clear cur char
+					data_[crow_][ccol_].char = 0x0;
+					updateScreen(crow_, ccol_);
+					
+					// put back cursor
+					ccol_--;
+					
+					// remove one char from buffer
+					readBuffer_ = readBuffer_.substr(0, readBuffer_.length - 1);
+				}
+			} else if (font_.isPrintable(event.charCode)) {
+				if (ccol_ < ncol_ - 1) {
+					var s: String = String.fromCharCode(event.charCode);
+					readBuffer_ += s;
+					print(s);
+				}
+			}
+		}
+
+		private function read_focusRestorer(event: FocusEvent): void {
+			stage.focus = this;
 		}
 	}
 }

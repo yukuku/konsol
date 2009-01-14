@@ -35,6 +35,10 @@ package yuku.konsol
 		private var bitmap_: Bitmap;
 		private var bgColor_: int = 0x0;
 		private var fgColor_: int = 0x7;
+		private var palette_: Array = [
+			0xff000000, 0xff0000aa, 0xff00aa00, 0xff00aaaa, 0xffaa0000, 0xffaa00aa, 0xffaa5500, 0xffaaaaaa,
+			0xff555555, 0xff5555ff, 0xff55ff55, 0xff55ffff, 0xffff5555, 0xffff55ff, 0xffffff55, 0xffffffff,
+		];
 		
 		public function Konsol(nrow: int = 25, ncol: int = 80, font: Font = null) {
 			this.nrow_ = nrow;
@@ -92,7 +96,7 @@ package yuku.konsol
 		public function clearScreen(): void {
 			data_ = newData();
 			
-			screen_.fillRect(screen_.rect, font_.getPaletteValue(bgColor_));
+			screen_.fillRect(screen_.rect, palette_[bgColor_]);
 		}
 		
 		public function position(row: int = -1, col: int = -1): void {
@@ -117,8 +121,7 @@ package yuku.konsol
 			screen_.fillRect(new Rectangle(col * font_.width, row * font_.height, font_.width, font_.height), bgColor_);
 			
 			if (font_.isPrintable(cell.char)) {
-				// kopi dari font, TODO fgColor
-				screen_.copyPixels(font_.getColoredBitmap(fgColor_), font_.getRectForChar(cell.char), new Point(col * font_.width, row * font_.height));
+				screen_.copyPixels(font_.getColoredBitmap(palette_[fgColor_]), font_.getRectForChar(cell.char), new Point(col * font_.width, row * font_.height));
 			}
 		}
 		

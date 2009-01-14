@@ -66,8 +66,6 @@ package yuku.konsol
 			
 			crow_ = 0;
 			ccol_ = 0;
-			
-			this.buttonMode = true;
 		}
 		
 		private function newRow(): Array {
@@ -95,8 +93,10 @@ package yuku.konsol
 		private function shiftUp(): void {
 			data_ = data_.slice(1).concat([newRow()]);
 			
-			// kopi data layar ke atas
-			screen_.copyPixels(screen_, new Rectangle(0, 1 * font_.height, screen_.width, nrow_ * font_.height), new Point(0, 0));
+			// kopi data layar ke atas, satu per satu untuk mencegah ngaco
+			for (var row: int = 0; row < nrow_ - 1; row++) {
+				screen_.copyPixels(screen_, new Rectangle(0, (row+1) * font_.height, screen_.width, font_.height), new Point(0, row * font_.height));
+			}
 			
 			// dan hapus baris terbawah
 			screen_.fillRect(new Rectangle(0, (nrow_-1) * font_.height, screen_.width, font_.height), bgColor_);
@@ -137,10 +137,10 @@ package yuku.konsol
 			var cell: Cell = data_[row][col];
 			
 			// hapus
-			screen_.fillRect(new Rectangle(col * font_.width, row * font_.height, font_.width, font_.height), bgColor_);
+			screen_.fillRect(new Rectangle(col * font_.width, row * font_.height, font_.width, font_.height), cell.bgColor);
 			
 			if (font_.isPrintable(cell.char)) {
-				screen_.copyPixels(font_.getColoredBitmap(palette_[fgColor_]), font_.getRectForChar(cell.char), new Point(col * font_.width, row * font_.height));
+				screen_.copyPixels(font_.getColoredBitmap(palette_[cell.fgColor]), font_.getRectForChar(cell.char), new Point(col * font_.width, row * font_.height));
 			}
 		}
 		
@@ -191,10 +191,12 @@ package yuku.konsol
 			screen_.unlock();
 		}
 		
-		public function println(s: String): void {
+		public function println(s: String = null): void {
 			screen_.lock();
 			
-			print(s);
+			if (s) {
+				print(s);
+			}
 			printNewLine();
 			
 			screen_.unlock();

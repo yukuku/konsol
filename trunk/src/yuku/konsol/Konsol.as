@@ -47,6 +47,9 @@ package yuku.konsol
 		private var readInitCol_: int = 0;
 		private var readBuffer_: String = '';
 		
+		//# for (save|restore)Position
+		private var savedPosition_: Point = null;
+		
 		public function Konsol(nrow: int = 25, ncol: int = 80, font: Font = null) {
 			this.nrow_ = nrow;
 			this.ncol_ = ncol;
@@ -91,7 +94,12 @@ package yuku.konsol
 		}
 		
 		private function shiftUp(): void {
+			//# geser data, juga savedPosition_
 			data_ = data_.slice(1).concat([newRow()]);
+			if (savedPosition_) {
+				savedPosition_.y--;
+				if (savedPosition_.y < 0) savedPosition_.y = 0;
+			}
 			
 			// kopi data layar ke atas, satu per satu untuk mencegah ngaco
 			for (var row: int = 0; row < nrow_ - 1; row++) {
@@ -110,30 +118,38 @@ package yuku.konsol
 			ccol_ = 0;
 		}
 		
-		public function position(row: int = -1, col: int = -1): void {
-			if (row != -1) {
-				crow_ = row;
-			}
-			
-			if (col != -1) {
-				ccol_ = col;
-			}
-			
-			if (crow_ < 0) crow_ = 0;
-			if (crow_ >= nrow_) crow_ = nrow_ - 1;
-			if (ccol_ < 0) ccol_ = 0;
-			if (ccol_ >= ncol_) ccol_ = ncol_ - 1;
-		}
-		
 		public function get crow(): int {
 			return crow_;
+		}
+		
+		public function set crow(value: int): void {
+			if (value < 0) value = 0;
+			if (value >= nrow_) value = nrow_ - 1;
+			crow_ = value;
 		}
 		
 		public function get ccol(): int {
 			return ccol_;
 		}
 		
-		private function updateScreen(row: int, col: int): void {
+		public function set ccol(value: int): void {
+			if (value < 0) value = 0;
+			if (value >= ncol_) value = ncol_ - 1;
+			ccol_ = value;
+		}
+		
+		public function savePosition(): void {
+			savedPosition_ = new Point(ccol_, crow_);
+		}
+		
+		public function restorePosition(): void {
+			if (savedPosition_) {
+				ccol_ = savedPosition_.x;
+				crow_ = savedPosition_.y;
+			}
+		}
+		
+		private function drawCell(row: int, col: int): void {
 			var cell: Cell = data_[row][col];
 			
 			// hapus
@@ -150,7 +166,7 @@ package yuku.konsol
 			cell.bgColor = bgColor_;
 			cell.fgColor = fgColor_;
 			
-			updateScreen(crow_, ccol_);
+			drawCell(crow_, ccol_);
 			
 			ccol_++;
 			
@@ -254,7 +270,7 @@ package yuku.konsol
 					
 					//# clear cur char
 					data_[crow_][ccol_].char = 0x0;
-					updateScreen(crow_, ccol_);
+					drawCell(crow_, ccol_);
 					
 					// remove one char from buffer
 					readBuffer_ = readBuffer_.substr(0, readBuffer_.length - 1);
